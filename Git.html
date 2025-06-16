@@ -96,6 +96,28 @@
                 pre.textContent = adjustedLines.join('\n').trim();
             });
 
+            document.querySelectorAll("svg.isolate").forEach((svg) => {
+                // Serialize SVG to string
+                const svgString = new XMLSerializer().serializeToString(svg);
+
+                // Create a Blob and generate a data URL
+                const blob = new Blob([svgString], { type: "image/svg+xml" });
+                const url = URL.createObjectURL(blob);
+
+                // Create <object> element
+                const objectElement = document.createElement("img");
+                objectElement.setAttribute("src", url);
+                objectElement.setAttribute("width", svg.getAttribute("width") || "100%");
+                objectElement.setAttribute("height", svg.getAttribute("height") || "100%");
+
+                // Copy relevant styling or attributes if needed (optional)
+                objectElement.className = svg.className;
+                objectElement.style.cssText = svg.style.cssText;
+
+                // Replace SVG with object
+                svg.parentNode.replaceChild(objectElement, svg);
+            });
+
             // Initialize Reveal with all Plugins
             Reveal.initialize({
                 width: 1800,
@@ -123,14 +145,13 @@
                 }
             });
 
-            document.addEventListener('DOMContentLoaded', function() {
-                Array.from(document.querySelector('.slides').getElementsByClassName('rw-colornote')).forEach(function(element) {
-                    element.insertAdjacentHTML('beforeend',
-                        '<span style="position:absolute;right:0;top:0;font-size:0.5em;"><code class="git-read">read</code><code>/</code><code class="git-write">write</code></span>');
-                });
+            Array.from(document.querySelector('.slides').getElementsByClassName('rw-colornote')).forEach(function(element) {
+                element.insertAdjacentHTML('beforeend',
+                    '<span style="position:absolute;right:0;top:0;font-size:0.5em;"><code class="git-read">read</code><code>/</code><code class="git-write">write</code></span>');
             });
         });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 </head>
 <body>
 
@@ -157,17 +178,6 @@
         </section>
 
         <section class="rw-colornote">
-            <h2>Repository und Working Directory (WD)</h2>
-            <div style="display: flex; gap: 1rem;">
-                <ul class="no-bullets" style="width: max-content; margin: 0 auto; display: grid; row-gap: 0.5em;">
-                    <li data-emoji="📝"><strong>Working Directory:</strong> Dein lokaler Projektordner, in dem du Dateien bearbeitest und speicherst.</li>
-                    <li data-emoji="📁"><strong><code>.git</code>:</strong> Verstecktes Unterverzeichnis, das alle Versionsdaten und Metadaten enthält – das eigentliche Repo.</li>
-                </ul>
-                <ul class="no-bullets" style="width: max-content; margin: 0 auto; display: grid; row-gap: 0.5em;">
-                    <li data-emoji="🚧"><strong>Trennung:</strong> Das WD gehört nicht zum Repo und zeigt nur den aktuellen Arbeitszustand. Das WD enthält das Repo.</li>
-                    <li data-emoji="🔄"><strong>Datenfluss:</strong> Beim Auschecken werden Dateien aus <code>.git</code> ins WD geladen; beim Einchecken vom WD ins <code>.git</code>.</li>
-                </ul>
-            </div>
             <h2 style="margin-top:2em;"><code>git init</code></h2>
             <ul class="no-bullets">
                 <li data-emoji="🚀"><code class="git-write">git init</code><br/>Erstellt im aktuellen Verzeichnis ein neues Repo (<code>.git</code>).</li>
@@ -194,6 +204,203 @@
                 </li>
                 <li data-emoji="📥"><strong>Lesereihenfolge:</strong> System → Global → Lokal (lokale Werte überschreiben globale).</li>
             </ul>
+        </section>
+
+        <section>
+            <h2>Repository und Working Directory (WD)</h2>
+            <div style="display: flex; gap: 1rem;">
+                <ul class="no-bullets" style="width: max-content; margin: 0 auto; display: grid; row-gap: 0.5em;">
+                    <li data-emoji="📝"><strong>Working Directory:</strong> Dein lokaler Projektordner, in dem du Dateien bearbeitest und speicherst.</li>
+                    <li data-emoji="📁"><strong><code>.git</code>:</strong> Verstecktes Unterverzeichnis, das alle Versionsdaten und Metadaten enthält – das eigentliche Repo.</li>
+                </ul>
+                <ul class="no-bullets" style="width: max-content; margin: 0 auto; display: grid; row-gap: 0.5em;">
+                    <li data-emoji="🚧"><strong>Trennung:</strong> Das WD gehört nicht zum Repo und zeigt nur den aktuellen Arbeitszustand. Das WD enthält das Repo.</li>
+                    <li data-emoji="🔄"><strong>Datenfluss:</strong> Beim Auschecken werden Dateien aus <code>.git</code> ins WD geladen; beim Einchecken vom WD ins <code>.git</code>.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section>
+            <h2>🌬️🌊 Git Datenfluss</h2>
+
+            <svg class="isolate" width="1600" height="800" viewBox="0 -15 600 285" xmlns="http://www.w3.org/2000/svg">
+                <style>
+                    :root {
+                        background: transparent;
+                        font-size: 16px;
+                        color-scheme: light dark;
+                        --text-color: light-dark(black, white);
+                        --arrow-color: light-dark(black, white);
+                        --border-color: light-dark(black, white);
+                    }
+                    .box {
+                        stroke: var(--border-color);
+                        stroke-width: 2px;
+                    }
+                    .label {
+                        font-weight: bold;
+                        fill: var(--text-color);
+                    }
+                    .line {
+                        stroke: var(--arrow-color);
+                        stroke-width: 2px;
+                    }
+                    .arrow {
+                        stroke: var(--arrow-color);
+                        stroke-width: 2px;
+                        marker-end: url(#arrowhead);
+                    }
+                </style>
+            </svg>
+
+            <script type="module">
+                const svg = d3.select("svg");
+
+                const arrowSize = 8;
+                svg.append("defs").append("marker")
+                    .attr("id", "arrowhead")
+                    .attr("class", "arrowhead")
+                    .attr("viewBox", `0 ${-arrowSize} ${2* arrowSize} ${2* arrowSize}`)
+                    .attr("refX", arrowSize)
+                    .attr("refY", 0)
+                    .attr("orient", "auto")
+                    .attr("markerWidth", arrowSize)
+                    .attr("markerHeight", arrowSize)
+                    .attr("xoverflow", "visible")
+                    .append("svg:path")
+                    .attr("d", `M 0,${-arrowSize} L ${2* arrowSize} ,0 L 0,${arrowSize}`)
+                    .style("fill", "var(--arrow-color)")
+                    .style("mix-blend-mode", "exclusion")
+                    .style("stroke", "none");
+
+                const y = 10;
+                const height = 260;
+                const boxWidth = 170;
+                const spacing = 30;
+
+                const colors = {
+                    wd: "light-dark(#e1f5fe, #1e0a01)",
+                    repo: "light-dark(#c8e6c9, #371936)",
+                    sa: "light-dark(#ffe082, #001f7d)",
+                    activeColor: "light-dark(#64b5f6, #9b4a09)",
+                    inactiveColor: "light-dark(#bbdefb, #442104)",
+                };
+
+                // Working Directory
+                const wdX = 10;
+                const wdY = 30;
+                svg.append("rect")
+                    .attr("x", wdX)
+                    .attr("y", y + wdY)
+                    .attr("width", boxWidth)
+                    .attr("height", height - wdY - 10)
+                    .attr("rx", 6)
+                    .attr("class", "box")
+                    .style("fill", colors.wd);
+                svg.append("text")
+                    .attr("x", wdX + boxWidth / 2)
+                    .attr("y", wdY + y - 10)
+                    .attr("text-anchor", "middle")
+                    .attr("class", "label")
+                    .text("Working Directory");
+
+                // Repository
+                const repoX = wdX + boxWidth + spacing;
+                const repoWidth = 2 * boxWidth + 40;
+                svg.append("rect")
+                    .attr("x", repoX)
+                    .attr("y", y)
+                    .attr("width", repoWidth)
+                    .attr("height", height)
+                    .attr("class", "box")
+                    .style("fill", colors.repo);
+                svg.append("text")
+                    .attr("x", repoX + repoWidth / 2)
+                    .attr("y", y - 10)
+                    .attr("text-anchor", "middle")
+                    .attr("class", "label")
+                    .text("Repository = .git Directory im WD");
+
+                // Staging Area (left inside Repo, offset for arrow)
+                const saX = repoX + 30;
+                const saWidth = boxWidth - 20;
+                svg.append("rect")
+                    .attr("x", saX)
+                    .attr("y", y + 30)
+                    .attr("width", saWidth)
+                    .attr("height", height - 40)
+                    .attr("rx", 6)
+                    .attr("class", "box")
+                    .style("fill", colors.sa);
+                svg.append("text")
+                    .attr("x", saX + saWidth / 2)
+                    .attr("y", y + 22)
+                    .attr("text-anchor", "middle")
+                    .attr("class", "label")
+                    .text("Staging Area");
+
+                // Features (ex-branches) right of SA
+                const features = [
+                    { name: "NEXT", color: colors.inactiveColor, dasharray: "1" },
+                    { name: "HEAD", color: colors.activeColor, dasharray: "0" },
+                    { name: "HEAD~1", color: colors.inactiveColor, dasharray: "0" },
+                    { name: "HEAD~2", color: colors.inactiveColor, dasharray: "0" }
+                ];
+                const featureX = saX + saWidth + 40;
+                const featureCount = features.length;
+                const featureBoxHeight = (height - 40 - ((featureCount - 1) * 10)) / featureCount;
+
+                svg.append("text")
+                    .attr("x", featureX + (boxWidth - 30) / 2)
+                    .attr("y", y + 22)
+                    .attr("text-anchor", "middle")
+                    .attr("class", "label")
+                    .text("Commits");
+
+                features.forEach((f, i) => {
+                    const fy = y + 30 + i * (featureBoxHeight + 10);
+                    if (i === 0) {
+                        // SA → featureX
+                        svg.append("line")
+                            .attr("x1", saX + saWidth)
+                            .attr("y1", fy + featureBoxHeight / 2)
+                            .attr("x2", featureX - arrowSize)
+                            .attr("y2", fy + featureBoxHeight / 2)
+                            .attr("class", "arrow");
+                    } else {
+                        // Commit → Next Commit
+                        svg.append("line")
+                            .attr("x1", featureX + (boxWidth - 30) / 2)
+                            .attr("y1", fy - 10)
+                            .attr("x2", featureX + (boxWidth - 30) / 2)
+                            .attr("y2", fy)
+                            .attr("class", "line");
+                    }
+
+                    svg.append("rect")
+                        .attr("x", featureX)
+                        .attr("y", fy)
+                        .attr("width", boxWidth - 30)
+                        .attr("height", featureBoxHeight)
+                        .attr("rx", 6)
+                        .attr("class", "box")
+                        .style("fill", f.color)
+                        .style("stroke-dasharray", f.dasharray);
+                    svg.append("text")
+                        .attr("x", featureX + (boxWidth - 30) / 2)
+                        .attr("y", fy + featureBoxHeight / 2 + 5)
+                        .attr("text-anchor", "middle")
+                        .text(f.name);
+                });
+
+                // WD → SA
+                svg.append("line")
+                    .attr("x1", wdX + boxWidth)
+                    .attr("y1", y + height / 2)
+                    .attr("x2", saX - arrowSize)
+                    .attr("y2", y + height / 2)
+                    .attr("class", "arrow");
+            </script>
         </section>
 
         <section class="rw-colornote">
