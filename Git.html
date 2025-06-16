@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <title>Git</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/black.css">
+    <style>
+        :root {
+            --left: 25%;
+            --r-heading-margin: 0.35em 0 1em 0;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        .row {
+            display: flex;
+            gap: 3%;
+        }
+        .left {
+            flex-basis: var(--left);
+        }
+        .right {
+            flex-basis: calc(100% - var(--left));
+        }
+        pre {
+            background-color: #222;
+            color: #eee;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            overflow-x: auto;
+        }
+        .no-bullets {
+            list-style: none; /* remove default bullets */
+            margin: 0;
+            padding: 0;
+        }
+        .no-bullets li::marker {
+            content: none;    /* Safari/Firefox: remove default bullets */
+        }
+        .no-bullets li {
+            position: relative;
+            padding-left: 3em;
+        }
+        .no-bullets li::before {
+            content: attr(data-emoji);
+            position: absolute;
+            left: 0em;
+            width: 2.5em;
+            text-align: right;
+            white-space: nowrap;
+        }
+        .git-read {
+            color: #0e0;
+        }
+        .git-write {
+            color: #0ff;
+        }
+
+        /* Debug */
+        .debug .slides {
+            outline: aqua 1px solid;
+        }
+        .debug ul {
+            outline: 1px red solid;
+        }
+        .debug .no-bullets li::before {
+            outline: 1px lime solid;
+        }
+    </style>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll('pre').forEach(pre => {
+                const lines = pre.textContent.split('\n');
+
+                // Find the indentation of the first non-empty line
+                const firstLineIndentMatch = lines.find(line => line.trim().length > 0)?.match(/^(\s*)/);
+                const firstIndent = firstLineIndentMatch ? firstLineIndentMatch[1].length : 0;
+
+                // Remove the indentation
+                const adjustedLines = lines.map(line => line.slice(firstIndent));
+
+                pre.textContent = adjustedLines.join('\n').trim();
+            });
+        });
+    </script>
+</head>
+<body>
+
+<div class="reveal">
+    <div class="slides">
+        <section>
+            <h2>Grundkonzepte von Git</h2>
+            <div style="display: flex; gap: 1rem;">
+                <ul class="no-bullets" style="width: max-content; margin: 0 auto; display: grid; row-gap: 0.5em;">
+                    <li data-emoji="📁">Repository (Repo)</li>
+                    <li data-emoji="📝">Working Directory (WD)</li>
+                    <li data-emoji="🎯">Staging Area (SA)</li>
+                    <li data-emoji="📦">Commit</li>
+                    <li data-emoji="🌿">Branch</li>
+                </ul>
+                <ul class="no-bullets" style="width: max-content; margin: 0 auto; display: grid; row-gap: 0.5em;">
+                    <li data-emoji="🔀">Merge</li>
+                    <li data-emoji="⚔️">Conflict</li>
+                    <li data-emoji="🌐">Remote</li>
+                    <li data-emoji="🔃">Pull &amp; Push</li>
+                    <li data-emoji="🏷️">Tag</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="rw-colornote">
+            <h2>Repository und Working Directory (WD)</h2>
+            <div style="display: flex; gap: 1rem;">
+                <ul class="no-bullets" style="width: max-content; margin: 0 auto; display: grid; row-gap: 0.5em;">
+                    <li data-emoji="📝"><strong>Working Directory:</strong> Dein lokaler Projektordner, in dem du Dateien bearbeitest und speicherst.</li>
+                    <li data-emoji="📁"><strong><code>.git</code>:</strong> Verstecktes Unterverzeichnis, das alle Versionsdaten und Metadaten enthält – das eigentliche Repo.</li>
+                </ul>
+                <ul class="no-bullets" style="width: max-content; margin: 0 auto; display: grid; row-gap: 0.5em;">
+                    <li data-emoji="🚧"><strong>Trennung:</strong> Das WD gehört nicht zum Repo und zeigt nur den aktuellen Arbeitszustand.</li>
+                    <li data-emoji="🔄"><strong>Datenfluss:</strong> Beim Auschecken werden Dateien aus <code>.git</code> ins WD geladen; beim Einchecken vom WD ins <code>.git</code>.</li>
+                </ul>
+            </div>
+            <h2 style="margin-top:2em;"><code>git init</code></h2>
+            <ul class="no-bullets">
+                <li data-emoji="🚀"><code class="git-write">git init</code><br/>Erstellt im aktuellen Verzeichnis ein neues Repo (<code>.git</code>).</li>
+            </ul>
+        </section>
+
+        <section class="rw-colornote">
+            <h2><code>git config</code></h2>
+            <ul class="no-bullets" style="display: grid; row-gap: 1em;">
+                <li data-emoji="⚙️">Liest und schreibt Git-Einstellungen:
+                    <ul class="no-bullets" style="display: grid; row-gap: 0.4em; margin-top: 0.4em;">
+                        <li data-emoji="🔍"><code class="git-read">git config user.name</code><br/>Liest den aktuellen Wert.</li>
+                        <li data-emoji="✏️"><code class="git-write">git config user.name "Name"</code><br/>Schreibt den Wert lokal im aktuellen Repo.</li>
+                        <li data-emoji="🌐"><code class="git-write">git config --global user.name "Name"</code><br/>Schreibt den Wert global im Benutzeraccount.</li>
+                        <li data-emoji="🖥️"><code class="git-write">git config --system user.name "Name"</code><br/>Schreibt den Wert systemweit (eventuell Admin-Rechte benötigt).</li>
+                    </ul>
+                </li>
+                <li data-emoji="📂"><strong>Speicherorte:</strong>
+                    <ul class="no-bullets" style="display: grid; row-gap: 0.4em; margin-top: 0.4em;">
+                        <li data-emoji="📁📄">Lokal: <code>./.git/config</code></li>
+                        <li data-emoji="🌐📄">Global: <code>~/.gitconfig</code></li>
+                        <li data-emoji="🖥️📄">System: <code>/etc/gitconfig</code> (Installation)</li>
+                    </ul>
+                </li>
+                <li data-emoji="📥"><strong>Lesereihenfolge:</strong> System → Global → Lokal (lokale Werte überschreiben globale).</li>
+            </ul>
+        </section>
+
+        <section class="rw-colornote">
+            <h2>🎯 Staging Area (SA)</h2>
+            <div style="display: flex; gap: 1rem;">
+                <ul class="no-bullets" style="width: 30%; margin: 0 auto; display: grid; row-gap: 0.5em;">
+                    <li data-emoji="🗃️">Zwischenspeicher im Repo für vorgemerkte Änderungen</li>
+                    <li data-emoji="⏩">Änderungen wandern von WD in SA</li>
+                    <li data-emoji="✅">Dient Auswahl genau der Änderungen, die in die nächste Version einfließen</li>
+                    <li data-emoji="📦">Git erzeugt daraus später eine neue Version im Repo</li>
+                </ul>
+                <ul class="no-bullets" style="width: 70%; margin: 0 auto; display: grid; row-gap: 0.5em;">
+                    <li data-emoji="✅"><code class="git-write">git add &lt;file&gt;</code><br>
+                        Kopiert Änderungen aus WD in SA.
+                    </li>
+                    <li data-emoji="✅🎚️"><code class="git-write">git add -p</code><br>
+                        Interaktives Hunk-Staging für feinkörnige Kontrolle.
+                    </li>
+                    <li data-emoji="❌"><code class="git-write">git rm &lt;file&gt;</code><br>
+                        Entfernt Datei aus WD und markiert Löschung in SA.
+                    </li>
+                    <li data-emoji="➡️"><code class="git-write">git mv &lt;old&gt; &lt;new&gt;</code><br>
+                        Bennent Dateien in WD um und fügt Umbenennung zu SA hinzu.
+                    </li>
+                    <li data-emoji="↩️"><code class="git-write">git restore --staged &lt;file&gt;</code><br>
+                        Hebt die Vormerkung in der SA auf, das WD bleibt unverändert.
+                    </li>
+                    <li data-emoji="🔍"><code class="git-read">git diff --staged</code><br>
+                        Zeigt die Unterschiede zwischen SA und letzter Version im Repo.
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </div>
+</div>
+
+<script type="module">
+    import Reveal from 'https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.esm.js';
+    import RevealZoom from 'https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/zoom/zoom.esm.js';
+    import RevealNotes from 'https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.esm.js';
+    import RevealSearch from 'https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/search/search.esm.js';
+    import RevealMarkdown from 'https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/markdown/markdown.esm.js';
+    import RevealHighlight from 'https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.esm.js';
+    import RevealMermaid from 'https://cdn.jsdelivr.net/npm/reveal.js-mermaid-plugin@2.3.0/plugin/mermaid/mermaid.esm.js';
+
+    // Initialize Reveal with all Plugins
+    Reveal.initialize({
+        width: 1800,
+        height: 1200,
+        controls: true,
+        slideNumber: true,
+        progress: true,
+        center: true,
+        hash: true,
+        plugins: [
+            RevealZoom,
+            RevealNotes,
+            RevealSearch,
+            RevealMarkdown,
+            RevealHighlight,
+            RevealMermaid
+        ]
+    });
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 't') {
+            document.documentElement.classList.toggle('light');
+        } else if (event.key === 'd') {
+            document.documentElement.classList.toggle('debug');
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        Array.from(document.querySelector('.slides').getElementsByClassName('rw-colornote')).forEach(function(element) {
+            element.insertAdjacentHTML('beforeend',
+                '<span style="position:absolute;right:0;top:0;font-size:0.5em;"><code class="git-read">read</code><code>/</code><code class="git-write">write</code></span>');
+        });
+    });
+</script>
+</body>
+</html>
