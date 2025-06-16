@@ -73,7 +73,15 @@
         }
     </style>
 
-    <script>
+    <script type="module">
+        import Reveal from 'https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.esm.js';
+        import RevealZoom from 'https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/zoom/zoom.esm.js';
+        import RevealNotes from 'https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.esm.js';
+        import RevealSearch from 'https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/search/search.esm.js';
+        import RevealMarkdown from 'https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/markdown/markdown.esm.js';
+        import RevealHighlight from 'https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.esm.js';
+        import RevealMermaid from 'https://cdn.jsdelivr.net/npm/reveal.js-mermaid-plugin@2.3.0/plugin/mermaid/mermaid.esm.js';
+
         document.addEventListener("DOMContentLoaded", () => {
             document.querySelectorAll('pre').forEach(pre => {
                 const lines = pre.textContent.split('\n');
@@ -86,6 +94,40 @@
                 const adjustedLines = lines.map(line => line.slice(firstIndent));
 
                 pre.textContent = adjustedLines.join('\n').trim();
+            });
+
+            // Initialize Reveal with all Plugins
+            Reveal.initialize({
+                width: 1800,
+                height: 1200,
+                controls: true,
+                slideNumber: true,
+                progress: true,
+                center: true,
+                hash: true,
+                plugins: [
+                    RevealZoom,
+                    RevealNotes,
+                    RevealSearch,
+                    RevealMarkdown,
+                    RevealHighlight,
+                    RevealMermaid
+                ]
+            });
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 't') {
+                    document.documentElement.classList.toggle('light');
+                } else if (event.key === 'd') {
+                    document.documentElement.classList.toggle('debug');
+                }
+            });
+
+            document.addEventListener('DOMContentLoaded', function() {
+                Array.from(document.querySelector('.slides').getElementsByClassName('rw-colornote')).forEach(function(element) {
+                    element.insertAdjacentHTML('beforeend',
+                        '<span style="position:absolute;right:0;top:0;font-size:0.5em;"><code class="git-read">read</code><code>/</code><code class="git-write">write</code></span>');
+                });
             });
         });
     </script>
@@ -122,7 +164,7 @@
                     <li data-emoji="📁"><strong><code>.git</code>:</strong> Verstecktes Unterverzeichnis, das alle Versionsdaten und Metadaten enthält – das eigentliche Repo.</li>
                 </ul>
                 <ul class="no-bullets" style="width: max-content; margin: 0 auto; display: grid; row-gap: 0.5em;">
-                    <li data-emoji="🚧"><strong>Trennung:</strong> Das WD gehört nicht zum Repo und zeigt nur den aktuellen Arbeitszustand.</li>
+                    <li data-emoji="🚧"><strong>Trennung:</strong> Das WD gehört nicht zum Repo und zeigt nur den aktuellen Arbeitszustand. Das WD enthält das Repo.</li>
                     <li data-emoji="🔄"><strong>Datenfluss:</strong> Beim Auschecken werden Dateien aus <code>.git</code> ins WD geladen; beim Einchecken vom WD ins <code>.git</code>.</li>
                 </ul>
             </div>
@@ -187,49 +229,5 @@
         </section>
     </div>
 </div>
-
-<script type="module">
-    import Reveal from 'https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.esm.js';
-    import RevealZoom from 'https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/zoom/zoom.esm.js';
-    import RevealNotes from 'https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/notes/notes.esm.js';
-    import RevealSearch from 'https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/search/search.esm.js';
-    import RevealMarkdown from 'https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/markdown/markdown.esm.js';
-    import RevealHighlight from 'https://cdn.jsdelivr.net/npm/reveal.js@5/plugin/highlight/highlight.esm.js';
-    import RevealMermaid from 'https://cdn.jsdelivr.net/npm/reveal.js-mermaid-plugin@2.3.0/plugin/mermaid/mermaid.esm.js';
-
-    // Initialize Reveal with all Plugins
-    Reveal.initialize({
-        width: 1800,
-        height: 1200,
-        controls: true,
-        slideNumber: true,
-        progress: true,
-        center: true,
-        hash: true,
-        plugins: [
-            RevealZoom,
-            RevealNotes,
-            RevealSearch,
-            RevealMarkdown,
-            RevealHighlight,
-            RevealMermaid
-        ]
-    });
-
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 't') {
-            document.documentElement.classList.toggle('light');
-        } else if (event.key === 'd') {
-            document.documentElement.classList.toggle('debug');
-        }
-    });
-
-    document.addEventListener('DOMContentLoaded', function() {
-        Array.from(document.querySelector('.slides').getElementsByClassName('rw-colornote')).forEach(function(element) {
-            element.insertAdjacentHTML('beforeend',
-                '<span style="position:absolute;right:0;top:0;font-size:0.5em;"><code class="git-read">read</code><code>/</code><code class="git-write">write</code></span>');
-        });
-    });
-</script>
 </body>
 </html>
