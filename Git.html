@@ -2,20 +2,105 @@
 <html lang="de">
 <head>
     <meta charset="utf-8">
-    <title>Git</title>
+    <meta name="author" content="Benjamin Buch">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style">
+
+    <title>Git</title>
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reset.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/theme/black.css">
-    <style>
+
+    <style id="include-fonts">
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap');
+    </style>
+
+    <style id="color-style">
+        :root {
+            --tt-transition-duration: 0.3s;
+            --tt-transition-function: ease;
+
+            color-scheme: light dark;
+
+            --r-overlay-element-bg-color: 240, 240, 240;
+            --r-overlay-element-fg-color: 0, 0, 0;
+
+            --tt-text-color: light-dark(#1d1d1b, #e2e2e4);
+            --tt-good-color: light-dark(#00f, #0fa);
+            --tt-bad-color: light-dark(#ff2200, #ff5200);
+
+            --r-background-color: light-dark(#e2e2e4, #191919);
+            --r-main-color: light-dark(#222, #fff);
+            --r-heading-color: light-dark(#222, #fff);
+            --r-link-color: light-dark(#2a76dd, #42affa);
+            --r-link-color-dark: light-dark(#1a53a1, #068de9);
+            --r-link-color-hover: light-dark(#6ca0e8, #8dcffc);
+            --r-selection-background-color: light-dark(#98bdef, rgba(66, 175, 250, 0.75));
+            --r-selection-color: light-dark(#fff, #fff);
+
+            --tt-code-bg: light-dark(#fbebd4, #272822);
+            --tt-code-fg: light-dark(#1d1d1b, #ddd);
+            --tt-code-title: light-dark(#f06431, white);
+            --tt-code-keyword: light-dark(#f92672, #f92672);
+            --tt-code-code: light-dark(black, #66d9ef);
+            --tt-code-symbol: light-dark(#889b4a, #bf79db);
+            --tt-code-string: light-dark(red, #a6e22e);
+            --tt-code-comment: light-dark(#855a2c, #a5a18e);
+
+            --tt-coderef-fn: light-dark(#00f, #0af);
+            --tt-coderef-var: light-dark(#9c1414, #a63434);
+            --tt-coderef-val: light-dark(#d6921e, #f3b854);
+        }
+
+        :root.light {
+            color-scheme: light;
+
+            --r-overlay-element-bg-color: 0, 0, 0;
+            --r-overlay-element-fg-color: 240, 240, 240;
+        }
+
+        * {
+            transition:
+                color var(--tt-transition-duration) var(--tt-transition-function),
+                border-color var(--tt-transition-duration) var(--tt-transition-function),
+                border-block-color var(--tt-transition-duration) var(--tt-transition-function),
+                background-color var(--tt-transition-duration) var(--tt-transition-function),
+                column-rule-color var(--tt-transition-duration) var(--tt-transition-function),
+                outline-color var(--tt-transition-duration) var(--tt-transition-function),
+                text-decoration-color var(--tt-transition-duration) var(--tt-transition-function),
+                text-emphasis-color var(--tt-transition-duration) var(--tt-transition-function),
+                fill var(--tt-transition-duration) var(--tt-transition-function),
+                stroke var(--tt-transition-duration) var(--tt-transition-function);
+        }
+
+        body { transition: background-color var(--tt-transition-duration) var(--tt-transition-function) !important; }
+    </style>
+
+    <style id="global-style">
         :root {
             --left: 25%;
             --r-heading-margin: 0.35em 0 1em 0;
+            --r-main-font: 'Noto Sans', 'Noto Color Emoji', sans-serif;
+            --r-heading-font: 'Noto Sans', 'Noto Color Emoji', sans-serif;
+            --r-code-font: 'Source Code Pro', monospace;
+            --r-heading-text-transform: none;
         }
+
         html, body {
             height: 100%;
             margin: 0;
         }
+
+        h1, h2, h3, h4 {
+            font-variant: small-caps;
+        }
+
+        :is(h1, h2, h3, h4) code {
+            font-variant: none;
+        }
+
         .row {
             display: flex;
             gap: 3%;
@@ -27,8 +112,6 @@
             flex-basis: calc(100% - var(--left));
         }
         pre {
-            background-color: #222;
-            color: #eee;
             padding: 20px;
             border-radius: 10px;
             font-size: 1.1em;
@@ -55,21 +138,21 @@
             white-space: nowrap;
         }
         .git-read {
-            color: #0e0;
+            color: var(--tt-good-color);
         }
         .git-write {
-            color: #0ff;
+            color: var(--tt-bad-color);
         }
 
         /* Debug */
         .debug .slides {
-            outline: aqua 1px solid;
+            outline: 1px var(--tt-text-color) solid;
         }
         .debug ul {
-            outline: 1px red solid;
+            outline: 1px var(--tt-good-color) solid;
         }
         .debug .no-bullets li::before {
-            outline: 1px lime solid;
+            outline: 1px var(--tt-bad-color) solid;
         }
     </style>
 
@@ -97,6 +180,19 @@
             });
 
             document.querySelectorAll("svg.isolate").forEach((svg) => {
+                // Copy fonts and color styles into the SVG
+                ["include-fonts", "color-style"].forEach(id => {
+                    const styleElem = document.getElementById(id);
+                    const cloned = styleElem.cloneNode(true);
+                    cloned.removeAttribute("id");
+                    let defs = svg.querySelector("defs");
+                    if (!defs) {
+                        defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+                        svg.insertBefore(defs, svg.firstChild);
+                    }
+                    defs.insertBefore(cloned, defs.firstChild);
+                });
+
                 // Serialize SVG to string
                 const svgString = new XMLSerializer().serializeToString(svg);
 
