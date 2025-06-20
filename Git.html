@@ -251,18 +251,31 @@
             });
         });
     </script>
+
+    <script>
+        function replaceElementWith(id, targetId) {
+            const element = document.getElementById(id);
+            const target = document.getElementById(targetId);
+            if (element && target) {
+                const clone = element.cloneNode(true);
+                clone.setAttribute("id", targetId);
+                target.parentNode.replaceChild(clone, target);
+            }
+        }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 </head>
 <body>
 
 <div class="reveal">
     <div class="slides">
+
         <section>
             <h2>Grundkonzepte von Git</h2>
             <div style="display: flex; gap: 1rem;">
                 <ul class="no-bullets" style="width: max-content; margin: 0 auto; display: grid; row-gap: 0.5em;">
-                    <li data-emoji="🗂️">Repository (Repo)</li>
                     <li data-emoji="📊">Working Directory (WD)</li>
+                    <li data-emoji="🗂️">Repository (Repo)</li>
                     <li data-emoji="🎯">Staging Area (SA)</li>
                     <li data-emoji="📦">Commit</li>
                     <li data-emoji="🌿">Branch</li>
@@ -278,15 +291,400 @@
         </section>
 
         <section>
-            <h2>Repository und Working Directory (WD)</h2>
+            <section>
+                <h2>👋 Git Theater 👀</h2>
+
+                <svg class="isolate" id="theater" width="1600" height="800">
+                    <style>
+                        .label {
+                            fill: white;
+                            text-anchor: middle;
+                            dominant-baseline: middle;
+                        }
+                    </style>
+                </svg>
+
+                <script type="module">
+                    const svg = d3.select("#theater");
+                    const width = +svg.attr("width");
+                    const height = +svg.attr("height");
+
+                    const third = height / 3;
+                    const fontSize = 64;
+                    const circleRadius = 24;
+                    const stageY = third;
+                    const stageHeight = third;
+                    const stageWidth = width * 3 / 4;
+                    const sideStageWidth = width - stageWidth;
+                    const sr = stageHeight / 10;
+
+                    // back stage
+                    svg.append("rect")
+                        .attr("x", 0).attr("y", 0)
+                        .attr("width", width).attr("height", third)
+                        .attr("fill", "#444");
+                    svg.append("text")
+                        .style("font-size", `${fontSize}px`)
+                        .attr("x", width / 2).attr("y", third / 4)
+                        .attr("class", "label backstage")
+                        .text("Backstage");
+
+                    // main stage
+                    svg.append("rect")
+                        .attr("x", 0).attr("y", stageY)
+                        .attr("width", stageWidth).attr("height", stageHeight)
+                        .attr("fill", "#777");
+                    svg.append("text")
+                        .style("font-size", `${fontSize}px`)
+                        .attr("x", stageWidth / 2).attr("y", stageY + stageHeight / 4)
+                        .attr("class", "label mainstage")
+                        .text("Bühne");
+
+                    // side stage
+                    svg.append("rect")
+                        .attr("x", stageWidth).attr("y", stageY)
+                        .attr("width", sideStageWidth).attr("height", stageHeight)
+                        .attr("fill", "#999");
+                    svg.append("text")
+                        .style("font-size", `${fontSize}px`)
+                        .attr("x", stageWidth + sideStageWidth / 2)
+                        .attr("y", stageY + stageHeight / 4)
+                        .attr("class", "label sidestage1")
+                        .text("Seiten-")
+                        .clone()
+                        .attr("y", stageY + stageHeight / 4 + fontSize * 1.5)
+                        .attr("class", "label sidestage2")
+                        .text("Bühne");
+
+                    // audience area
+                    const grandstandTop = third * 2;
+                    const grandstandHeight = third;
+                    svg.append("rect")
+                        .attr("x", 0).attr("y", grandstandTop)
+                        .attr("width", width).attr("height", grandstandHeight)
+                        .attr("fill", "#ccc");
+                </script>
+            </section>
+
+            <section>
+                <h2>👋 Git Theater 😸</h2>
+
+                <svg id="theater2"></svg>
+
+                <script type="module">
+                    replaceElementWith("theater", "theater2");
+
+                    const svg = d3.select("#theater2");
+                    const width = +svg.attr("width");
+                    const height = +svg.attr("height");
+
+                    const third = height / 3;
+                    const fontSize = 64;
+                    const circleRadius = 24;
+                    const stageY = third;
+                    const stageHeight = third;
+                    const stageWidth = width * 3 / 4;
+                    const sideStageWidth = width - stageWidth;
+                    const sr = stageHeight / 10;
+
+                    const grandstandTop = third * 2;
+                    const grandstandHeight = third;
+                    const audienceTop = grandstandTop + third / 9;
+                    const audienceHeight = grandstandHeight - third / 2;
+
+                    // seating parameters
+                    const rows = 3;
+                    let emojis = [
+                        "😅", "😄", "🎃", "😍", "🐻", "🤣", "🐼", "🐰",
+                        "😂", "😁", "🐷", "🐶", "😀", "🦁", "😘", "🐭",
+                        "😃", "😊", "🙂", "😌", "👽", "🐯", "🤗", "🤩",
+                        "😉", "🤔", "🐱", "🙃", "🦊", "🐹", "😆", "🤖",
+                        "🐸", "🥰", "🦄", "🐨", "😇", "🐮",
+                    ];
+
+                    for (let r = 0; r < rows; r++) {
+                        const seats = 11 + r * 3;
+                        const startFrac = r / (rows - 1) * -1/4 + 0.08;
+                        const endFrac   = r / (rows - 1) * +1/4 + 3/4 - 0.05;
+                        const startX = startFrac * width;
+                        const endX   = endFrac   * width;
+                        const span   = endX - startX;
+                        const spacing = span / (seats - 1);
+                        const rowStep = audienceHeight / rows;
+                        const centerIndex = (seats - 1) / 2;
+
+                        for (let i = 0; i < seats; i++) {
+                            const rel = (i - centerIndex) / centerIndex;
+                            const curve = Math.sqrt(Math.max(0, 1 - rel * rel)) * (r + 3) / 3;
+                            const y = audienceTop
+                                + r * rowStep
+                                + curve * rowStep
+                                + rowStep / 2;
+                            const x = startX + i * spacing;
+                            if (x < circleRadius) continue;
+
+                            if (emojis.length > 0) {
+                                const emoji = emojis.pop();
+                                svg.append("text")
+                                    .attr("x", x)
+                                    .attr("y", y)
+                                    .attr("class", "label")
+                                    .style("font-size", `${circleRadius * 2}px`)
+                                    .text(emoji);
+                            } else {
+                                svg.append("circle")
+                                    .attr("cx", x)
+                                    .attr("cy", y)
+                                    .attr("r", circleRadius)
+                                    .attr("fill", "#333");
+                            }
+                        }
+                    }
+                </script>
+            </section>
+
+            <section>
+                <h2>👋 Git Theater 🙀</h2>
+
+                <svg id="theater3"></svg>
+
+                <script type="module">
+                    replaceElementWith("theater2", "theater3");
+
+                    const svg = d3.select("#theater3");
+                    const width = +svg.attr("width");
+                    const height = +svg.attr("height");
+                    const third = height / 3;
+                    const fontSize = 64;
+                    const circleRadius = 24;
+                    const stageY = third;
+                    const stageHeight = third;
+                    const stageWidth = width * 3 / 4;
+                    const sideStageWidth = width - stageWidth;
+                    const sr = stageHeight / 10;
+                    
+                    // place emojis on main stage
+                    svg.append("text")
+                        .attr("text-anchor", "middle")
+                        .attr("alignment-baseline", "middle")
+                        .style("font-size", `${sr * 3}px`)
+                        .text("💃")
+                        .attr("x", stageWidth / 2 - sr * 5)
+                        .attr("y", stageY + stageHeight * 0.75)
+                        .clone()
+                        .style("font-size", `${sr * 2}px`)
+                        .text("🪄")
+                        .attr("x", stageWidth / 2 - sr * 2)
+                        .attr("y", stageY + stageHeight * 0.75 - sr)
+                        .clone()
+                        .text("🐒")
+                        .attr("x", stageWidth / 2 + sr * 2)
+                        .attr("y", stageY + stageHeight * 0.75)
+                        .clone()
+                        .text("🐈‍⬛")
+                        .attr("x", stageWidth / 2 + sr * 5)
+                        .clone()
+                        .text("🧨")
+                        .attr("y", stageY + stageHeight * 0.8)
+                        .attr("x", stageWidth / 2 + sr * 11)
+                        .clone()
+                        .style("font-size", `${sr * 4}px`)
+                        .text("🌳")
+                        .attr("x", sr * 5)
+                        .attr("y", stageY + sr * 5)
+                        .clone()
+                        .text("🌲")
+                        .attr("x", stageWidth - sr * 5)
+                        .clone()
+                        .style("font-size", `${sr * 3}px`)
+                        .text("🪻")
+                        .attr("x", sr * 7)
+                        .attr("y", stageY + sr * 8)
+                        .clone()
+                        .text("🌺")
+                        .attr("x", stageWidth - sr * 7)
+                        .clone()
+                        .text("🌜")
+                        .attr("y", stageY + sr * 3.5)
+                        .attr("x", sr * 12)
+                        ;
+                </script>
+            </section>
+
+            <section>
+                <h2>👋 Git Theater 😼</h2>
+
+                <svg id="theater4"></svg>
+
+                <script type="module">
+                    replaceElementWith("theater3", "theater4");
+
+                    const svg = d3.select("#theater4");
+                    const width = +svg.attr("width");
+                    const height = +svg.attr("height");
+                    const third = height / 3;
+                    const fontSize = 64;
+                    const circleRadius = 24;
+                    const stageY = third;
+                    const stageHeight = third;
+                    const stageWidth = width * 3 / 4;
+                    const sideStageWidth = width - stageWidth;
+                    const sr = stageHeight / 10;
+
+                    // place emojis on back stage
+                    svg.append("text")
+                        .attr("text-anchor", "middle")
+                        .attr("alignment-baseline", "middle")
+                        .style("font-size", `${sr * 2}px`)
+                        .text("🙎")
+                        .attr("x", sr * 11)
+                        .attr("y", stageHeight - sr * 3)
+                        .clone()
+                        .text("🎛️")
+                        .style("font-size", `${sr * 1.5}px`)
+                        .attr("x", sr * 10)
+                        .attr("y", stageHeight - sr)
+                        .clone()
+                        .text("🎚️")
+                        .attr("x", sr * 12)
+                        .attr("y", stageHeight - sr)
+                        .clone()
+                        .style("font-size", `${sr * 2}px`)
+                        .text("🧙‍♀️")
+                        .attr("x", sr * 18)
+                        .attr("y", sr * 6)
+                        .clone()
+                        .text("🎩")
+                        .attr("x", sr * 21)
+                        .clone()
+                        .text("💡")
+                        .attr("x", sr * 24)
+                        .clone()
+                        .text("🐇")
+                        .attr("x", sr * 18)
+                        .attr("y", sr * 9)
+                        .clone()
+                        .text("🐩")
+                        .attr("x", sr * 21)
+                        .clone()
+                        .text("🪽")
+                        .attr("x", sr * 24)
+                        .clone()
+                        .style("font-size", `${sr * 3}px`)
+                        .text("🌻")
+                        .attr("x", width - sr * 17)
+                        .attr("y", sr * 5)
+                        .clone()
+                        .text("⛈️")
+                        .attr("x", width - sr * 13)
+                        .clone()
+                        .style("font-size", `${sr * 4}px`)
+                        .text("🌵")
+                        .attr("x", width - sr * 3)
+                        .clone()
+                        .text("🪾")
+                        .attr("x", width - sr * 8)
+                        .clone()
+                        .style("font-size", `${sr * 3}px`)
+                        .text("🦹")
+                        .attr("x", width / 2 + sr)
+                        .attr("y", stageHeight - sr * 2)
+                        .clone()
+                        .text("🧚")
+                        .attr("x", width / 2 + sr * 5)
+                        .clone()
+                        .style("font-size", `${sr * 4}px`)
+                        .text("🗣️")
+                        .attr("x", sr * 3)
+                        .attr("y", sr * 4.5)
+                        .clone()
+                        .style("font-size", `${sr * 3}px`)
+                        .text("📢")
+                        .attr("x", sr * 7)
+                        .attr("y", sr * 5)
+                        ;
+                </script>
+            </section>
+
+            <section>
+                <h2>👋 Git Theater 😻</h2>
+
+                <svg id="theater5"></svg>
+
+                <script type="module">
+                    replaceElementWith("theater4", "theater5");
+
+                    const svg = d3.select("#theater5");
+                    const width = +svg.attr("width");
+                    const height = +svg.attr("height");
+                    const third = height / 3;
+                    const fontSize = 64;
+                    const circleRadius = 24;
+                    const stageY = third;
+                    const stageHeight = third;
+                    const stageWidth = width * 3 / 4;
+                    const sideStageWidth = width - stageWidth;
+                    const sr = stageHeight / 10;
+
+                    // place emojis on side stage
+                    svg.append("text")
+                        .attr("text-anchor", "middle")
+                        .attr("alignment-baseline", "middle")
+                        .style("font-size", `${sr * 2}px`)
+                        .text("🐒")
+                        .attr("x", width - sr * 4)
+                        .attr("y", stageY + stageHeight * 0.9)
+                        .clone()
+                        .text("❌")
+                        .clone()
+                        .text("🌜")
+                        .attr("x", width - sr * 7)
+                        .clone()
+                        .text("❌")
+                        .clone()
+                        .text("🪣")
+                        .attr("x", stageWidth + sr * 2)
+                        .clone()
+                        .text("🫧")
+                        .attr("y", stageY + stageHeight * 0.9 - sr * 2)
+                        .clone()
+                        .style("font-size", `${sr * 3}px`)
+                        .text("🧜")
+                        .attr("y", stageY + sr * 4)
+                        .clone()
+                        .text("🌞")
+                        .attr("y", stageY + sr * 5.5)
+                        .attr("x", width - sr * 2)
+                        ;
+                </script>
+            </section>
+
+            <section>
+                <h2>👋 Git Theater 🙈</h2>
+
+                <svg id="theater6"></svg>
+
+                <script type="module">
+                    replaceElementWith("theater5", "theater6");
+
+                    d3.select("#theater6 .backstage").text("Working Directory");
+                    d3.select("#theater6 .mainstage").text("HEAD Version");
+                    d3.select("#theater6 .sidestage1").text("Staging");
+                    d3.select("#theater6 .sidestage2").text("Area");
+                </script>
+            </section>
+        </section>
+
+        <section>
+            <h2>Working Directory (WD) und Repository (Repo)</h2>
             <div style="display: flex; gap: 1rem;">
                 <ul class="no-bullets" style="width: max-content; margin: 0 auto; display: grid; row-gap: 0.5em;">
                     <li data-emoji="📊"><strong>Working Directory:</strong> Dein lokaler Projektordner, in dem du Dateien bearbeitest und speicherst.</li>
                     <li data-emoji="🗂️"><strong><code>.git</code>:</strong> Verstecktes Unterverzeichnis, das alle Versionsdaten und Metadaten enthält – das eigentliche Repo.</li>
                 </ul>
                 <ul class="no-bullets" style="width: max-content; margin: 0 auto; display: grid; row-gap: 0.5em;">
-                    <li data-emoji="🚧"><strong>Trennung:</strong> Das WD gehört nicht zum Repo und zeigt nur den aktuellen Arbeitszustand. Das WD enthält das Repo.</li>
                     <li data-emoji="🔄"><strong>Datenfluss:</strong> Beim Auschecken werden Dateien aus <code>.git</code> ins WD geladen; beim Einchecken vom WD ins <code>.git</code>.</li>
+                    <li data-emoji="🚧"><strong>Trennung:</strong> Das WD gehört nicht zum Repo und zeigt nur den aktuellen Arbeitszustand. Das WD enthält das Repo.</li>
                 </ul>
             </div>
         </section>
@@ -327,7 +725,7 @@
         <section>
             <h2>📊⮕🎯⮕🗂️ Git Datenfluss</h2>
 
-            <svg class="isolate" id="" width="1600" height="800" viewBox="0 -15 600 285" xmlns="http://www.w3.org/2000/svg">
+            <svg class="isolate" id="wd-sa-commits" width="1600" height="800" viewBox="0 -15 600 285" xmlns="http://www.w3.org/2000/svg">
                 <style>
                     :root {
                         background: transparent;
@@ -358,7 +756,7 @@
             </svg>
 
             <script type="module">
-                const svg = d3.select("svg");
+                const svg = d3.select("#wd-sa-commits");
 
                 const arrowSize = 8;
                 svg.append("defs").append("marker")
@@ -537,169 +935,6 @@
                     </li>
                 </ul>
             </div>
-        </section>
-
-        <section>
-            <h2>Theater</h2>
-
-            <svg class="isolate" id="theater" width="1600" height="800">
-                <style>
-                    .label {
-                        fill: white;
-                        text-anchor: middle;
-                        dominant-baseline: middle;
-                    }
-                </style>
-            </svg>
-
-            <script type="module">
-                const svg = d3.select("#theater");
-                const width = +svg.attr("width");
-                const height = +svg.attr("height");
-                const third = height / 3;
-                const fontSize = 64;
-                const circleRadius = 24;
-
-                // back stage
-                svg.append("rect")
-                    .attr("x", 0).attr("y", 0)
-                    .attr("width", width).attr("height", third)
-                    .attr("fill", "#444");
-                svg.append("text")
-                    .style("font-size", `${fontSize}px`)
-                    .attr("x", width / 2).attr("y", third / 2)
-                    .attr("class", "label")
-                    .text("Backstage");
-
-                // main stage and side stage
-                const stageY = third;
-                const stageHeight = third;
-                const stageWidth = width * 3 / 4;
-                const sideStageWidth = width / 4;
-
-                // main stage
-                svg.append("rect")
-                    .attr("x", 0).attr("y", stageY)
-                    .attr("width", stageWidth).attr("height", stageHeight)
-                    .attr("fill", "#777");
-                svg.append("text")
-                    .style("font-size", `${fontSize}px`)
-                    .attr("x", stageWidth / 2).attr("y", stageY + stageHeight / 2)
-                    .attr("class", "label")
-                    .text("Bühne");
-
-                // side stage
-                svg.append("rect")
-                    .attr("x", stageWidth).attr("y", stageY)
-                    .attr("width", sideStageWidth).attr("height", stageHeight)
-                    .attr("fill", "#999");
-                svg.append("text")
-                    .style("font-size", `${fontSize}px`)
-                    .attr("x", stageWidth + sideStageWidth / 2)
-                    .attr("y", stageY + stageHeight / 2 - fontSize / 1.5)
-                    .attr("class", "label")
-                    .text("Seiten-")
-                    .clone()
-                        .attr("y", stageY + stageHeight / 2 + fontSize / 1.5)
-                        .text("Bühne");
-
-                // === place stage emojis ===
-                const mainEmojis = ["💃","🐒","🐈‍⬛","🧨","🪄","🌺"];
-                const sideEmojis = ["🌳","🌲","🪻","🎊","🌛"];
-
-                // place emojis on main stage
-                const msCols = 3, msRows = 2;
-                mainEmojis.forEach((emoji, idx) => {
-                    const col = idx % msCols;
-                    const row = Math.floor(idx / msCols);
-                    const xMain = (col + 0.5) * (stageWidth / msCols);
-                    const yMain = stageY + (row + 0.5) * (stageHeight / msRows);
-                    svg.append("text")
-                        .attr("x", xMain)
-                        .attr("y", yMain)
-                        .attr("text-anchor", "middle")
-                        .attr("alignment-baseline", "middle")
-                        .style("font-size", `${circleRadius * 2}px`)
-                        .text(emoji);
-                });
-
-                // place emojis on side stage
-                const ssCols = 2, ssRows = 3;
-                sideEmojis.forEach((emoji, idx) => {
-                    const col = idx % ssCols;
-                    const row = Math.floor(idx / ssCols);
-                    const xSide = stageWidth + (col + 0.5) * (sideStageWidth / ssCols);
-                    const ySide = stageY + (row + 0.5) * (stageHeight / ssRows);
-                    svg.append("text")
-                        .attr("x", xSide)
-                        .attr("y", ySide)
-                        .attr("text-anchor", "middle")
-                        .attr("alignment-baseline", "middle")
-                        .style("font-size", `${circleRadius * 2}px`)
-                        .text(emoji);
-                });
-                // === end stage emojis ===
-
-                // audience area
-                const grandstandTop = third * 2;
-                const grandstandHeight = third;
-                svg.append("rect")
-                    .attr("x", 0).attr("y", grandstandTop)
-                    .attr("width", width).attr("height", grandstandHeight)
-                    .attr("fill", "#ccc");
-
-                const audienceTop = grandstandTop + third / 9;
-                const audienceHeight = grandstandHeight - third / 2;
-
-                // seating parameters
-                const rows = 3;
-                let emojis = [
-                    "😅", "😄", "🎃", "😍", "🐻", "🤣", "🐼", "🐰",
-                    "😂", "😁", "🐷", "🐶", "😀", "🦁", "😘", "🐭",
-                    "😃", "😊", "🙂", "😌", "👽", "🐯", "🤗", "🤩",
-                    "😉", "🤔", "🐱", "🙃", "🦊", "🐹", "😆", "🤖",
-                    "🐸", "🥰", "🦄", "🐨", "😇", "🐮",
-                ];
-
-                for (let r = 0; r < rows; r++) {
-                    const seats = 11 + r * 3;
-                    const startFrac = r / (rows - 1) * -1/4 + 0.08;
-                    const endFrac   = r / (rows - 1) * +1/4 + 3/4 - 0.05;
-                    const startX = startFrac * width;
-                    const endX   = endFrac   * width;
-                    const span   = endX - startX;
-                    const spacing = span / (seats - 1);
-                    const rowStep = audienceHeight / rows;
-                    const centerIndex = (seats - 1) / 2;
-
-                    for (let i = 0; i < seats; i++) {
-                        const rel = (i - centerIndex) / centerIndex;
-                        const curve = Math.sqrt(Math.max(0, 1 - rel * rel)) * (r + 3) / 3;
-                        const y = audienceTop
-                            + r * rowStep
-                            + curve * rowStep
-                            + rowStep / 2;
-                        const x = startX + i * spacing;
-                        if (x < circleRadius) continue;
-
-                        if (emojis.length > 0) {
-                            const emoji = emojis.pop();
-                            svg.append("text")
-                                .attr("x", x)
-                                .attr("y", y)
-                                .attr("class", "label")
-                                .style("font-size", `${circleRadius * 2}px`)
-                                .text(emoji);
-                        } else {
-                            svg.append("circle")
-                                .attr("cx", x)
-                                .attr("cy", y)
-                                .attr("r", circleRadius)
-                                .attr("fill", "#333");
-                        }
-                    }
-                }
-            </script>
         </section>
 
     </div>
